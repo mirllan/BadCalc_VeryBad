@@ -1,3 +1,4 @@
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -123,10 +124,10 @@ namespace BadCalcVeryBad
             }
             catch (Exception)
             {
-                // si falla escribir el archivo no importa la app sigue
+                // si esto falla escribir el archivo no importa la app sigue
             }
 
-            // reemplazo el goto con un while loop para bajar complejidad
+            // reemplazo el goto con un while loop para bajar a como lo comprendo yo
             bool running = true;
             while (running)
             {
