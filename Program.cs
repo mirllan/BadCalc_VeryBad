@@ -10,7 +10,6 @@ using System.Threading;
 namespace BadCalcVeryBad
 {
 
-	// revision de errores
 	public class U
 	{
 		// ESTO LO CAMBIÉ: Sonar recomienda no exponer campos mutables public.
