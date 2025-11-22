@@ -1,65 +1,47 @@
-name: SonarCloud
-
+name: SonarQube
 on:
   push:
     branches:
-      
-master
-pull_request:
-  branches:
-master
-types:
-opened
-synchronize
-reopened
-
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
 jobs:
   build:
-    name: Build and Analyze
-    runs-on: ubuntu-latest
-
+    name: Build and analyze
+    runs-on: windows-latest
     steps:
-      # 1️⃣ Clonar el repositorio
-      
-name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
-      # 2️⃣ Configurar .NET
-      
-name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.0.x
-
-      # 3️⃣ Instalar SonarScanner para .NET
-      
-name: Install SonarScanner for .NET
-      run: dotnet tool install --global dotnet-sonarscanner
-
-      # 4️⃣ Iniciar análisis SonarCloud
-      
-name: Begin SonarCloud Analysis
-      run: |
-        dotnet sonarscanner begin \/k:"juancamilop1_BadCalc_VeryBad" \/o:"juancamilop1" \/d:sonar.login="${{ secrets.SONAR_TOKEN }}"
-
-      # 5️⃣ Restaurar dependencias
-      
-name: Restore dependencies
-      run: dotnet restore
-
-      # 6️⃣ Compilar el proyecto
-      
-name: Build
-      run: dotnet build --no-restore
-
-      # 7️⃣ Ejecutar pruebas
-      
-name: Test
-      run: dotnet test --no-build --verbosity normal
-
-      # 8️⃣ Finalizar análisis SonarCloud
-      
-name: End SonarCloud Analysis
-      run: dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: 'zulu' # Alternative distribution options are available.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: Cache SonarQube Cloud packages
+        uses: actions/cache@v4
+        with:
+          path: ~\sonar\cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+      - name: Cache SonarQube Cloud scanner
+        id: cache-sonar-scanner
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}\scanner
+          key: ${{ runner.os }}-sonar-scanner
+          restore-keys: ${{ runner.os }}-sonar-scanner
+      - name: Install SonarQube Cloud scanner
+        if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
+        shell: powershell
+        run: |
+          New-Item -Path ${{ runner.temp }}\scanner -ItemType Directory
+          dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}\scanner
+      - name: Build and analyze
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        shell: powershell
+        run: |
+          ${{ runner.temp }}\scanner\dotnet-sonarscanner begin /k:"mirllan_BadCalc_VeryBad3" /o:"mirllan" /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+          dotnet build
+          ${{ runner.temp }}\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
